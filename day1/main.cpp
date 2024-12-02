@@ -3,6 +3,7 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <ranges>
 #include <vector>
 
 
@@ -21,14 +22,10 @@ std::pair<std::vector<uint32_t>, std::vector<uint32_t>> read_input(const std::fi
     return std::make_pair(inputA, inputB);
 }
 
-int32_t distance(const std::pair<uint32_t, uint32_t>& p)
+template <typename T>
+T distance(T a, T b)
 {
-    return std::abs(static_cast<int32_t>(p.first - p.second));
-}
-
-uint32_t accumulate_distance(uint32_t sum, const std::pair<uint32_t, uint32_t>& p)
-{
-    return sum + distance(p);
+    return std::abs(a-b);
 }
 
 int main(int argc, char *argv[]) {
@@ -44,21 +41,31 @@ int main(int argc, char *argv[]) {
     // Sort vectors
     std::ranges::sort(a);
     std::ranges::sort(b);
-    std::vector<std::pair<uint32_t, uint32_t>> input;
-    for (auto i = 0; i < a.size(); i++)
-    {
-        input.emplace_back(a[i], b[i]);
-    }
 
-    const auto total_dist = std::accumulate(input.begin(), input.end(), 0, accumulate_distance);
+    const auto total_dist = std::ranges::fold_left(
+        std::ranges::views::zip_transform(
+            distance<int32_t>,
+            a,
+            b
+        ),
+        0,
+        std::plus());
     std::cout << std::format("Total Distance = {}", total_dist) << std::endl;
 
     // PART 2
-    uint32_t similarity = std::accumulate(a.begin(), a.end(), 0, [&b](uint32_t sum, const uint32_t& item)
+    auto count_elems = [&b](const uint32_t& item)
     {
-        const auto num_in_second_list = std::ranges::count(b.begin(), b.end(), item);
-        return sum + item * num_in_second_list;
-    });
+        return std::ranges::count(b.begin(), b.end(), item);
+    };
+
+    uint32_t similarity = std::ranges::fold_left(
+        std::ranges::views::zip_transform(
+            std::multiplies(),
+            a,
+            a | std::ranges::views::transform(count_elems)
+        ),
+        0,
+        std::plus());
     std::cout << std::format("Similarity Score = {}", similarity) << std::endl;
     return 0;
 }
