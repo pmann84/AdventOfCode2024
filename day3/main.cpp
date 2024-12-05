@@ -57,7 +57,6 @@ int main(int argc, char *argv[]) {
                 total += first_operand * second_operand;
             }
         }
-
         num_instructions++;
         search_start = all_matches.suffix().first;
     }
